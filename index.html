@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sales Performance Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #eef2ff, #f5f3ff, #ecfeff);
+            color: #172033;
+        }
+
+        /* ================= HEADER ================= */
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed, #06b6d4);
+            color: white;
+            padding: 30px 45px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(79, 70, 229, 0.25);
+        }
+
+        .header::before {
+            content: "";
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.12);
+            right: 8%;
+            top: -120px;
+        }
+
+        .header::after {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            right: 25%;
+            bottom: -100px;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .header h1 {
+            font-size: 34px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .header p {
+            margin-top: 8px;
+            font-size: 15px;
+            opacity: 0.9;
+        }
+
+        /* ================= CONTAINER ================= */
+
+        .container {
+            max-width: 1450px;
+            margin: auto;
+            padding: 35px;
+        }
+
+        /* ================= KPI CARDS ================= */
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 22px;
+            margin-bottom: 28px;
+        }
+
+        .kpi {
+            position: relative;
+            padding: 25px;
+            border-radius: 18px;
+            color: white;
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+            transition: 0.3s ease;
+        }
+
+        .kpi:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 35px rgba(0,0,0,0.18);
+        }
+
+        .kpi::after {
+            content: "";
+            position: absolute;
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            right: -30px;
+            bottom: -40px;
+        }
+
+        .kpi:nth-child(1) {
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+        }
+
+        .kpi:nth-child(2) {
+            background: linear-gradient(135deg, #0891b2, #06b6d4);
+        }
+
+        .kpi:nth-child(3) {
+            background: linear-gradient(135deg, #059669, #10b981);
+        }
+
+        .kpi:nth-child(4) {
+            background: linear-gradient(135deg, #ea580c, #f97316);
+        }
+
+        .kpi-icon {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .kpi h3 {
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-bottom: 9px;
+        }
+
+        .kpi p {
+            font-size: 29px;
+            font-weight: 800;
+        }
+
+        /* ================= CHART GRID ================= */
+
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .chart-card {
+            background: rgba(255,255,255,0.92);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(30,41,59,0.08);
+            border: 1px solid rgba(255,255,255,0.8);
+            transition: 0.3s ease;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(30,41,59,0.13);
+        }
+
+        .chart-card.full {
+            grid-column: 1 / -1;
+        }
+
+        .chart-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .chart-title h2 {
+            font-size: 19px;
+            color: #1e293b;
+        }
+
+        .title-icon {
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 19px;
+            background: #eef2ff;
+        }
+
+        canvas {
+            max-height: 350px;
+        }
+
+        /* ================= INSIGHT BAR ================= */
+
+        .insight {
+            margin-top: 25px;
+            padding: 22px 25px;
+            border-radius: 18px;
+            background: linear-gradient(
+                135deg,
+                #fff7ed,
+                #fef3c7
+            );
+            border-left: 5px solid #f97316;
+            box-shadow: 0 8px 25px rgba(249,115,22,0.08);
+        }
+
+        .insight h3 {
+            color: #c2410c;
+            margin-bottom: 7px;
+        }
+
+        .insight p {
+            color: #57534e;
+            line-height: 1.6;
+        }
+
+        /* ================= FOOTER ================= */
+
+        .footer {
+            text-align: center;
+            padding: 28px;
+            margin-top: 10px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        /* ================= RESPONSIVE ================= */
+
+        @media (max-width: 1000px) {
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-card.full {
+                grid-column: auto;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 18px;
+            }
+
+            .header {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="header">
+
+        <div class="header-content">
+
+            <h1>📊 Sales Performance Dashboard</h1>
+
+            <p>
+                Online Retail Sales Analytics
+                • 2010–2011
+            </p>
+
+        </div>
+
+    </header>
+
+
+    <main class="container">
+
+        <!-- ================= KPI CARDS ================= -->
+
+        <section class="kpi-grid">
+
+            <div class="kpi">
+
+                <div class="kpi-icon">💰</div>
+
+                <h3>Total Revenue</h3>
+
+                <p>£10.64M</p>
+
+            </div>
+
+
+            <div class="kpi">
+
+                <div class="kpi-icon">🧾</div>
+
+                <h3>Total Orders</h3>
+
+                <p>19,960</p>
+
+            </div>
+
+
+            <div class="kpi">
+
+                <div class="kpi-icon">📦</div>
+
+                <h3>Total Quantity Sold</h3>
+
+                <p>5.57M</p>
+
+            </div>
+
+
+            <div class="kpi">
+
+                <div class="kpi-icon">💵</div>
+
+                <h3>Average Order Value</h3>
+
+                <p>£533.17</p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= CHARTS ================= -->
+
+        <section class="charts">
+
+
+            <!-- MONTHLY REVENUE -->
+
+            <div class="chart-card full">
+
+                <div class="chart-title">
+
+                    <div class="title-icon">📈</div>
+
+                    <h2>Monthly Revenue Trend</h2>
+
+                </div>
+
+                <canvas id="monthlyChart"></canvas>
+
+            </div>
+
+
+            <!-- PRODUCTS -->
+
+            <div class="chart-card">
+
+                <div class="chart-title">
+
+                    <div class="title-icon">🏆</div>
+
+                    <h2>Top 10 Products by Revenue</h2>
+
+                </div>
+
+                <canvas id="productChart"></canvas>
+
+            </div>
+
+
+            <!-- COUNTRIES -->
+
+            <div class="chart-card">
+
+                <div class="chart-title">
+
+                    <div class="title-icon">🌍</div>
+
+                    <h2>Top 10 Countries by Revenue</h2>
+
+                </div>
+
+                <canvas id="countryChart"></canvas>
+
+            </div>
+
+
+        </section>
+
+
+        <!-- ================= BUSINESS INSIGHT ================= -->
+
+        <section class="insight">
+
+            <h3>💡 Business Insight</h3>
+
+            <p>
+                Revenue performance varies across months, products,
+                and regions. The dashboard helps identify high-value
+                products, important markets, and overall sales trends
+                for better business decision-making.
+            </p>
+
+        </section>
+
+
+    </main>
+
+
+    <footer class="footer">
+
+        Sales Performance Dashboard
+        <br>
+
+        Built with Python • Pandas • Power BI • Data Analytics
+
+    </footer>
+
+
+    <!-- ================= JAVASCRIPT ================= -->
+
+    <script>
+
+        /* ================= MONTHLY REVENUE ================= */
+
+        const monthlyLabels = [
+            "2010-12",
+            "2011-01",
+            "2011-02",
+            "2011-03",
+            "2011-04",
+            "2011-05",
+            "2011-06",
+            "2011-07",
+            "2011-08",
+            "2011-09",
+            "2011-10",
+            "2011-11",
+            "2011-12"
+        ];
+
+        const monthlyRevenue = [
+            748957,
+            560000,
+            522546,
+            716215,
+            537758,
+            770000,
+            761000,
+            718000,
+            756000,
+            1050000,
+            1000000,
+            1503867,
+            638000
+        ];
+
+
+        new Chart(
+            document.getElementById("monthlyChart"),
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels: monthlyLabels,
+
+                    datasets: [{
+
+                        label: "Revenue (£)",
+
+                        data: monthlyRevenue,
+
+                        borderColor: "#6366f1",
+
+                        backgroundColor:
+                            "rgba(99,102,241,0.15)",
+
+                        pointBackgroundColor: "#7c3aed",
+
+                        pointRadius: 5,
+
+                        borderWidth: 3,
+
+                        tension: 0.35,
+
+                        fill: true
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    plugins: {
+
+                        legend: {
+                            display: true
+                        }
+
+                    },
+
+                    scales: {
+
+                        y: {
+                            beginAtZero: true,
+
+                            grid: {
+                                color: "#e5e7eb"
+                            }
+                        },
+
+                        x: {
+
+                            grid: {
+                                display: false
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+
+
+        /* ================= TOP PRODUCTS ================= */
+
+        const productLabels = [
+
+            "Product 1",
+            "Product 2",
+            "Product 3",
+            "Product 4",
+            "Product 5",
+            "Product 6",
+            "Product 7",
+            "Product 8",
+            "Product 9",
+            "Product 10"
+
+        ];
+
+
+        const productRevenue = [
+
+            132000,
+            118000,
+            105000,
+            97000,
+            91000,
+            85000,
+            79000,
+            74000,
+            69000,
+            65000
+
+        ];
+
+
+        new Chart(
+
+            document.getElementById("productChart"),
+
+            {
+
+                type: "bar",
+
+                data: {
+
+                    labels: productLabels,
+
+                    datasets: [{
+
+                        label: "Revenue (£)",
+
+                        data: productRevenue,
+
+                        backgroundColor: [
+
+                            "#6366f1",
+                            "#8b5cf6",
+                            "#a855f7",
+                            "#c026d3",
+                            "#db2777",
+                            "#e11d48",
+                            "#f43f5e",
+                            "#f97316",
+                            "#f59e0b",
+                            "#eab308"
+
+                        ],
+
+                        borderRadius: 7
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    indexAxis: "y",
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+
+                    },
+
+                    scales: {
+
+                        x: {
+
+                            grid: {
+                                color: "#e5e7eb"
+                            }
+
+                        },
+
+                        y: {
+
+                            grid: {
+                                display: false
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+
+        /* ================= TOP COUNTRIES ================= */
+
+        const countryLabels = [
+
+            "United Kingdom",
+            "Netherlands",
+            "EIRE",
+            "Germany",
+            "France",
+            "Australia",
+            "Switzerland",
+            "Spain",
+            "Belgium",
+            "Sweden"
+
+        ];
+
+
+        const countryRevenue = [
+
+            9020000,
+            285000,
+            283000,
+            228000,
+            210000,
+            138000,
+            57000,
+            55000,
+            41000,
+            39000
+
+        ];
+
+
+        new Chart(
+
+            document.getElementById("countryChart"),
+
+            {
+
+                type: "bar",
+
+                data: {
+
+                    labels: countryLabels,
+
+                    datasets: [{
+
+                        label: "Revenue (£)",
+
+                        data: countryRevenue,
+
+                        backgroundColor: [
+
+                            "#06b6d4",
+                            "#0891b2",
+                            "#0ea5e9",
+                            "#3b82f6",
+                            "#2563eb",
+                            "#4f46e5",
+                            "#6366f1",
+                            "#7c3aed",
+                            "#8b5cf6",
+                            "#a855f7"
+
+                        ],
+
+                        borderRadius: 7
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    indexAxis: "y",
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        }
+
+                    },
+
+                    scales: {
+
+                        x: {
+
+                            grid: {
+                                color: "#e5e7eb"
+                            }
+
+                        },
+
+                        y: {
+
+                            grid: {
+                                display: false
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+    </script>
+
+</body>
+</html>
